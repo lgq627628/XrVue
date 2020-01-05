@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>XrVue</title>
+</head>
+<body>
+  <div id="app">
+    <div>我的Vue</div>
+    <div>{{person.name}}</div>
+    <div v-text="text"></div>
+    <div v-html="html"></div>
+    <input type="text" v-model="msg">
+    <div>{{msg}}</div>
+    <div v-bind="prop1"></div>
+    <div :bind="prop2"></div>
+    <div on-click="onClick">这是on的点击事件</div>
+    <div @click="handleClick">这是@的点击事件</div>
+  </div>
+
+  <script src="./XrVue.js"></script>
+  <script>
+    let vm = new XrVue({
+      el: '#app',
+      data: {
+        person: {
+          name: '尤水就下',
+          age: 18,
+          job: '前端'
+        },
+        text: '这是一个文本',
+        html: '<h1>这是html文本</h1>',
+        msg: '这是一个双向绑定的 msg',
+        prop1: '属性1',
+        prop2: '属性2'
+      },
+      methods: {
+        onClick() {
+          console.log('on点击了');
+        },
+        handleClick() {
+          console.log('@点击了');
+        }
+      }
+    })
+  </script>
+</body>
+<style>
+  * {
+    margin: 20px;
+    font-size: 30px;
+  }
+</style>
+</html>
