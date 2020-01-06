@@ -10,17 +10,20 @@
   <div id="app">
     <b>XrVue demo</b>
     <div>{{person.name}}</div>
-    <div v-text="text">
-      <div>呵呵呵</div>
-    </div>
+    <div v-text="text"></div>
     <div v-text="person.skill.one"></div>
     <div v-html="html"></div>
     <input type="text" v-model="msg">
     <div>{{msg}}</div>
-    <div v-bind:prop1="prop1"></div>
-    <div :prop2="prop2"></div>
+    <div v-bind:prop1="prop1">这是v-bind</div>
+    <div :prop2="prop2">这是:bind</div>
     <div v-on:click="onClick">这是on的点击事件</div>
     <div @click="handleClick">这是@的点击事件</div>
+    <ul>
+      <li>1</li>
+      <li>2</li>
+      <li>3</li>
+    </ul>
   </div>
 
   <script src="./XrVue.js"></script>
@@ -58,7 +61,7 @@
 <style>
   * {
     margin: 20px;
-    font-size: 30px;
+    font-size: 24px;
   }
 </style>
 </html>
