@@ -8,29 +8,37 @@
 </head>
 <body>
   <div id="app">
-    <div>我的Vue</div>
+    <b>XrVue demo</b>
     <div>{{person.name}}</div>
-    <div v-text="text"></div>
+    <div v-text="text">
+      <div>呵呵呵</div>
+    </div>
+    <div v-text="person.skill.one"></div>
     <div v-html="html"></div>
     <input type="text" v-model="msg">
     <div>{{msg}}</div>
-    <div v-bind="prop1"></div>
-    <div :bind="prop2"></div>
-    <div on-click="onClick">这是on的点击事件</div>
+    <div v-bind:prop1="prop1"></div>
+    <div :prop2="prop2"></div>
+    <div v-on:click="onClick">这是on的点击事件</div>
     <div @click="handleClick">这是@的点击事件</div>
   </div>
 
   <script src="./XrVue.js"></script>
   <script>
+    let el = document.querySelector('#app')
     let vm = new XrVue({
-      el: '#app',
+      el: el,
       data: {
         person: {
           name: '尤水就下',
           age: 18,
-          job: '前端'
+          job: '前端',
+          skill: {
+            one: '第一个技能',
+            two: '第二个技能'
+          }
         },
-        text: '这是一个文本',
+        text: '这是普通文本',
         html: '<h1>这是html文本</h1>',
         msg: '这是一个双向绑定的 msg',
         prop1: '属性1',
