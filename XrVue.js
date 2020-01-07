@@ -41,79 +41,108 @@ let compileUtils = {
 }
 class XrVue {
   constructor(options) {
-    this.$options = options
-    this.$el = this.isHtmlNode(options.el) ? options.el : document.querySelector(options.el)
-    this.$data = options.data || {}
+    this.$options = options;
+    this.$el = this.isHtmlNode(options.el) ? options.el : document.querySelector(options.el);
+    this.$data = options.data || {};
     // 第一步：数据劫持
-    this.handleReactiveData()
+    this.observeData(this.$data);
     // 第二步：编译
-    this.compile(this.$el, this)
+    this.compile(this.$el, this);
   }
-  handleReactiveData() {}
+  observeData(data) {
+    if (!data || typeof data !== 'object') return
+    Object.keys(data).forEach(key => {
+      this.defineReactive(data, key, data[key])
+    });
+  }
+  defineReactive(obj, key, value) {
+    this.observeData(value)
+    Object.defineProperty(obj, key, {
+      // 1、Object.defineProperty 只能劫持对象的属性，我们需要对每个对象的每个属性进行递归遍历。2、无法监控到数组下标的变化（其实它本身可以，是 Vue 为了提高性能抛弃了它，并提供了几个数组 hack 方法）
+      // 1、Proxy 可以劫持整个对象，并返回一个新对象。2、有13种劫持操作
+      // 为什么 Vue2 不使用 Proxy 呢？因为 Proxy 是 es6 提供的新特性，兼容性不好，最主要的是这个属性无法用 polyfill 来兼容
+      // 目前 Proxy 并没有有效的兼容方案，未来大概会是3.0和2.0并行，需要支持IE的选择2.0
+      enumerable: true, // 可枚举
+      configurable: false, // 不能再设置
+      get() {
+        return value
+      },
+      set(newValue) {
+        if (newValue !== value) {
+          console.log('新值', newValue, '旧值', value)
+          value = newValue
+        }
+      }
+    });
+  }
   compile(el, vm) {
     // 如果直接对元素进行操作则性能低，所以先转换成文档碎片，对文档碎片进行操作
-    let f = this.node2Fragment(el)
-    f = this.compileFragment(f, vm)
-    this.$el.appendChild(f)
+    let f = this.node2Fragment(el);
+    this.compileFragment(f, vm);
+    this.$el.appendChild(f);
   }
   compileFragment(f, vm) {
     Array.from(f.childNodes).forEach(child => {
-      if (this.isHtmlNode(child)) { // 如果是标签
-        this.compileHtml(child, vm)
-      } else { // 如果是文本
-        this.compileText(child, vm)
+      if (this.isHtmlNode(child)) {
+        // 如果是标签
+        this.compileHtml(child, vm);
+      } else {
+        // 如果是文本
+        this.compileText(child, vm);
       }
-      if (child.childNodes && child.childNodes.length) this.compileFragment(child, vm)
-    })
-    return f
+      if (child.childNodes && child.childNodes.length) this.compileFragment(child, vm);
+    });
+    return f;
   }
   compileHtml(node, vm) {
-    let attrs = node.attributes
+    let attrs = node.attributes;
     Array.from(attrs).forEach(attr => {
-      let { name, value } = attr
+      let { name, value } = attr;
       if (this.isDirective(name)) {
-        let [, directive] = name.split('-')
-        let [directiveName, eventName] = directive.split(':')
-        compileUtils[directiveName](node, value, vm, eventName)
-        node.removeAttribute(name)
+        let [, directive] = name.split('-');
+        let [directiveName, eventName] = directive.split(':');
+        compileUtils[directiveName](node, value, vm, eventName);
+        node.removeAttribute(name);
       } else if (this.isBindDirective(name)) {
-        let [, bindName] = name.split(':')
-        compileUtils['bind'](node, value, vm, bindName)
-        node.removeAttribute(`:${bindName}`)
+        let [, bindName] = name.split(':');
+        compileUtils['bind'](node, value, vm, bindName);
+        node.removeAttribute(`:${bindName}`);
       } else if (this.isEventDirective(name)) {
-        let [, eventName] = name.split('@')
-        compileUtils['on'](node, value, vm, eventName)
-        node.removeAttribute(`@${eventName}`)
+        let [, eventName] = name.split('@');
+        compileUtils['on'](node, value, vm, eventName);
+        node.removeAttribute(`@${eventName}`);
       }
-    })
+    });
   }
   compileText(node, vm) {
-    let text = node.textContent
-    if (/{{(.*)}}/.test(text)) {
-      let value = text.replace(/{{(.*)}}/g, (...args) => {
-        return compileUtils.getVal(args[1], vm)
-      })
-      compileUtils.updateMap.updateText(node, value)
+    let text = node.textContent;
+    if (/\{\{(.+?)\}\}/.test(text)) {
+      // .表示任意字符；+表示一次或多次；?表示非贪婪匹配
+      let value = text.replace(/{{(.+?)}}/g, (...args) => {
+        return compileUtils.getVal(args[1], vm);
+      });
+      compileUtils.updateMap.updateText(node, value);
     }
   }
   isBindDirective(str) {
-    return str.startsWith(':')
+    return str.startsWith(':');
   }
   isEventDirective(str) {
-    return str.startsWith('@')
+    return str.startsWith('@');
   }
   isDirective(str) {
-    return str.startsWith('v-')
+    return str.startsWith('v-');
   }
   node2Fragment(el) {
     // 因为文档片段存在于内存中，并不在DOM树中，所以将子元素插入到文档片段时不会引起页面回流（对元素位置和几何上的计算）。
     let f = document.createDocumentFragment();
-    while(el.firstChild) {
-      f.appendChild(el.firstChild)
+    while (el.firstChild) {
+      f.appendChild(el.firstChild);
     }
-    return f
+    return f;
   }
-  isHtmlNode(el) { // 如果是标签
-    return el.nodeType === 1
+  isHtmlNode(el) {
+    // 如果是标签
+    return el.nodeType === 1;
   }
 }

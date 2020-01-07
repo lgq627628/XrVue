@@ -9,12 +9,15 @@
 <body>
   <div id="app">
     <b>XrVue demo</b>
-    <div>{{person.name}}</div>
+    <div>{{person.name}}--{{person.job}}--{{}}</div>
     <div v-text="text"></div>
     <div v-text="person.skill.one"></div>
     <div v-html="html"></div>
     <input type="text" v-model="msg">
-    <div>{{msg}}</div>
+    <div>
+      {{msg}}
+      <h3>{{person.skill.two}}</h3>
+    </div>
     <div v-bind:prop1="prop1">这是v-bind</div>
     <div :prop2="prop2">这是:bind</div>
     <div v-on:click="onClick">这是on的点击事件</div>
