@@ -56,19 +56,22 @@ class XrVue {
     });
   }
   defineReactive(obj, key, value) {
+    let star = new Star()
     this.observeData(value)
     Object.defineProperty(obj, key, {
-      // 1、Object.defineProperty 只能劫持对象的属性，我们需要对每个对象的每个属性进行递归遍历。2、无法监控到数组下标的变化（其实它本身可以，是 Vue 为了提高性能抛弃了它，并提供了几个数组 hack 方法）
-      // 1、Proxy 可以劫持整个对象，并返回一个新对象。2、有13种劫持操作
-      // 为什么 Vue2 不使用 Proxy 呢？因为 Proxy 是 es6 提供的新特性，兼容性不好，最主要的是这个属性无法用 polyfill 来兼容
-      // 目前 Proxy 并没有有效的兼容方案，未来大概会是3.0和2.0并行，需要支持IE的选择2.0
+      // 1、Object.defineProperty 只能劫持对象的属性，只能重定义属性的读取（get）和设置（set）行为，我们需要对每个对象的每个属性进行递归遍历。2、无法监控到数组下标的变化（其实它本身可以，是 Vue 为了提高性能抛弃了它，并提供了几个数组 hack 方法）
+      // 1、Proxy 可以劫持整个对象，并返回一个新对象。2、有13种劫持操作。3、可以重定义更多的行为，比如 in、delete、函数调用等更多行为
+      // 为什么 Vue2 不使用 Proxy 呢？因为 Proxy 是 es6 提供的新特性，它最大问题在于浏览器支持度不够，兼容性不好，最主要的是这个属性无法用 polyfill 来兼容
+      // 目前 Proxy 并没有有效的兼容方案，未来大概会是3.0和2.0并行，需要支持IE的选择2.0。
       enumerable: true, // 可枚举
       configurable: false, // 不能再设置
       get() {
+        star.addFan()
         return value
       },
       set(newValue) {
         if (newValue !== value) {
+          star.notify(newValue)
           console.log('新值', newValue, '旧值', value)
           value = newValue
         }

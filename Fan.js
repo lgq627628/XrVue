@@ -1,0 +1,8 @@
+class Fan {
+  constructor() {
+
+  }
+  updateView () {
+
+  }
+}
