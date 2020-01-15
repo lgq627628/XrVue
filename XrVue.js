@@ -1,17 +1,32 @@
 let compileUtils = {
   text(node, expr, vm) {
+    new Fan((newVal) => {
+      this.updateMap.updateText(node, newVal)
+    });
     let value = this.getVal(expr, vm)
     this.updateMap.updateText(node, value)
    },
   html(node, expr, vm) {
+    new Fan((newVal) => {
+      this.updateMap.updateHtml(node, newVal)
+    });
+    // new Fan(vm, expr, (newVal) => {
+    //   this.updateMap.updateHtml(node, newVal)
+    // });
     let value = this.getVal(expr, vm)
     this.updateMap.updateHtml(node, value)
    },
   model(node, expr, vm) {
+    new Fan((newVal) => {
+      this.updateMap.updateModel(node, newVal)
+    });
     let value = this.getVal(expr, vm)
     this.updateMap.updateModel(node, value)
   },
   bind(node, expr, vm, bindName) {
+    new Fan((newVal) => {
+      this.updateMap.updateBind(node, newVal, bindName)
+    });
     let value = this.getVal(expr, vm)
     this.updateMap.updateBind(node, value, bindName)
   },
@@ -48,6 +63,22 @@ class XrVue {
     this.observeData(this.$data);
     // 第二步：编译
     this.compile(this.$el, this);
+    // 第三步：代理数据
+    this.proxyData(this.$data);
+  }
+  proxyData(data) {
+    Object.keys(data).forEach(key => {
+      Object.defineProperty(this, key, {
+        enumerable: true,
+        configurable: false,
+        get() {
+          return this.$data[key]
+        },
+        set(newVal) {
+            this.$data[key] = newVal
+        }
+      })
+    })
   }
   observeData(data) {
     if (!data || typeof data !== 'object') return
@@ -66,15 +97,20 @@ class XrVue {
       enumerable: true, // 可枚举
       configurable: false, // 不能再设置
       get() {
-        star.addFan()
+        // Watcher实例在实例化过程中， 会读取data中的某个属性， 从而触发当前get方法
+        Star.target && star.addFan(Star.target)
+        Star.target = null
+        console.log(obj, key, star)
         return value
       },
-      set(newValue) {
+      set: (newValue) => { // 使得 this 指向 vm，相当于在 defineProperty 写个 let self = this
         if (newValue !== value) {
-          star.notify(newValue)
           console.log('新值', newValue, '旧值', value)
           value = newValue
+          star.notify(newValue)
         }
+        console.log(star)
+        this.observeData(newValue) // 如果重新设置的值是对象，需要重新劫持
       }
     });
   }
@@ -89,7 +125,7 @@ class XrVue {
       if (this.isHtmlNode(child)) {
         // 如果是标签
         this.compileHtml(child, vm);
-      } else {
+      } else if (this.isTextNode(child)) {
         // 如果是文本
         this.compileText(child, vm);
       }
@@ -122,6 +158,9 @@ class XrVue {
     if (/\{\{(.+?)\}\}/.test(text)) {
       // .表示任意字符；+表示一次或多次；?表示非贪婪匹配
       let value = text.replace(/{{(.+?)}}/g, (...args) => {
+        new Fan((newVal) => {
+          compileUtils.updateMap.updateText(node, newVal)
+        });
         return compileUtils.getVal(args[1], vm);
       });
       compileUtils.updateMap.updateText(node, value);
@@ -147,5 +186,9 @@ class XrVue {
   isHtmlNode(el) {
     // 如果是标签
     return el.nodeType === 1;
+  }
+  isTextNode(el) {
+    // 如果是标签
+    return el.nodeType === 3;
   }
 }
