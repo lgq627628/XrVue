@@ -20,6 +20,9 @@ let compileUtils = {
     new Fan((newVal) => {
       this.updateMap.updateModel(node, newVal)
     });
+    node.addEventListener('input', e => {
+      this.setVal(expr, vm, e.target.value)
+    })
     let value = this.getVal(expr, vm)
     this.updateMap.updateModel(node, value)
   },
@@ -39,9 +42,20 @@ let compileUtils = {
       return pre[cur]
     }, vm.$data)
   },
+  setVal(expr, vm, newVal) {
+    let exprs = expr.split('.')
+    expr.split('.').reduce((pre, cur, i) => {
+      console.log(pre, cur)
+      if (i === exprs.length - 1) {
+        pre[cur] = newVal
+      } else {
+        return pre[cur]
+      }
+    }, vm.$data)
+  },
   updateMap: {
     updateText(node, value){
-      node.textContent = value
+      node.textContent = value // node.nodeValue = value
     },
     updateHtml(node, value){
       node.innerHTML = value
@@ -100,16 +114,16 @@ class XrVue {
         // Watcher实例在实例化过程中， 会读取data中的某个属性， 从而触发当前get方法
         Star.target && star.addFan(Star.target)
         Star.target = null
-        console.log(obj, key, star)
+        // console.log(obj, key, star)
         return value
       },
       set: (newValue) => { // 使得 this 指向 vm，相当于在 defineProperty 写个 let self = this
         if (newValue !== value) {
-          console.log('新值', newValue, '旧值', value)
+          // console.log('新值', newValue, '旧值', value)
           value = newValue
           star.notify(newValue)
         }
-        console.log(star)
+        // console.log(star)
         this.observeData(newValue) // 如果重新设置的值是对象，需要重新劫持
       }
     });
@@ -154,14 +168,14 @@ class XrVue {
     });
   }
   compileText(node, vm) {
-    let text = node.textContent;
+    let text = node.textContent; // 或者是 nodeValue
     if (/\{\{(.+?)\}\}/.test(text)) {
       // .表示任意字符；+表示一次或多次；?表示非贪婪匹配
       let value = text.replace(/{{(.+?)}}/g, (...args) => {
         new Fan((newVal) => {
           compileUtils.updateMap.updateText(node, newVal)
         });
-        return compileUtils.getVal(args[1], vm);
+        return compileUtils.getVal(args[1].trim(), vm);
       });
       compileUtils.updateMap.updateText(node, value);
     }

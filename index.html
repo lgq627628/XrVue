@@ -13,6 +13,7 @@
     <div v-text="text"></div>
     <div v-text="person.skill.one"></div>
     <div v-html="html"></div>
+    <input type="text" v-model="person.name">
     <input type="text" v-model="msg">
     <div>
       {{msg}}
@@ -33,6 +34,8 @@
   <script src="./Star.js"></script>
   <script src="./XrVue.js"></script>
   <script>
+    // 这两次打印是同一个东西。我们没有生成新的 template，而是直接更新页面中的数据，又因为 dom 是引用类型，这样一来模板就没了，也就是原始 html 不见了
+    console.log(app)
     let el = document.querySelector('#app')
     let vm = new XrVue({
       el: el,
@@ -61,6 +64,7 @@
         }
       }
     })
+    console.log(app)
   </script>
 </body>
 <style>
